@@ -30,9 +30,9 @@ if (hamburger && navLinks) {
         
         // Ensure hamburger stays on top when menu is open
         if (navLinks.classList.contains('active')) {
-            hamburger.style.zIndex = '1003'; // Highest z-index when menu is open
+            hamburger.style.zIndex = '1003';
         } else {
-            hamburger.style.zIndex = '1001'; // Normal z-index when menu is closed
+            hamburger.style.zIndex = '1001';
         }
     }
 
@@ -62,48 +62,67 @@ if (hamburger && navLinks) {
         navLinks.classList.remove('active');
         mobileOverlay.classList.remove('active');
         document.body.style.overflow = '';
-        hamburger.style.zIndex = '1001'; // Reset to normal z-index
+        hamburger.style.zIndex = '1001';
     }
 }
 
-// Enhanced Testimonial Slider with manual controls
+// Enhanced Testimonial Slider with cool animations
 const testimonialSlides = document.querySelectorAll('.testimonial-slide');
 const dots = document.querySelectorAll('.dot');
 const prevBtn = document.querySelector('.testimonial-btn.prev');
 const nextBtn = document.querySelector('.testimonial-btn.next');
 let currentSlide = 0;
 let slideInterval;
+let isAnimating = false;
 
-function showSlide(n) {
-    if (testimonialSlides.length > 0) {
-        testimonialSlides.forEach(slide => slide.classList.remove('active'));
-        dots.forEach(dot => dot.classList.remove('active'));
-        
-        currentSlide = (n + testimonialSlides.length) % testimonialSlides.length;
-        
+function showSlide(n, direction = 'next') {
+    if (isAnimating || testimonialSlides.length === 0) return;
+    
+    isAnimating = true;
+    
+    // Remove active classes
+    testimonialSlides.forEach(slide => {
+        slide.classList.remove('active', 'slide-out');
+    });
+    dots.forEach(dot => dot.classList.remove('active'));
+    
+    const oldSlide = currentSlide;
+    currentSlide = (n + testimonialSlides.length) % testimonialSlides.length;
+    
+    // Add slide-out animation to current slide
+    if (testimonialSlides[oldSlide]) {
+        testimonialSlides[oldSlide].classList.add('slide-out');
+    }
+    
+    // Set timeout for smooth transition
+    setTimeout(() => {
         testimonialSlides[currentSlide].classList.add('active');
         if (dots[currentSlide]) {
             dots[currentSlide].classList.add('active');
         }
-    }
+        isAnimating = false;
+    }, 300);
 }
 
 function nextSlide() {
-    showSlide(currentSlide + 1);
+    showSlide(currentSlide + 1, 'next');
 }
 
 function prevSlide() {
-    showSlide(currentSlide - 1);
+    showSlide(currentSlide - 1, 'prev');
 }
 
 function startSlideShow() {
-    if (testimonialSlides.length > 0) {
-        slideInterval = setInterval(nextSlide, 8000);
+    if (testimonialSlides.length > 0 && !slideInterval) {
+        slideInterval = setInterval(nextSlide, 6000);
     }
 }
 
 function stopSlideShow() {
-    clearInterval(slideInterval);
+    if (slideInterval) {
+        clearInterval(slideInterval);
+        slideInterval = null;
+    }
 }
 
 // Initialize testimonial slider
@@ -128,9 +147,12 @@ if (testimonialSlides.length > 0) {
     // Dot click events
     dots.forEach((dot, index) => {
         dot.addEventListener('click', () => {
-            stopSlideShow();
-            showSlide(index);
-            startSlideShow();
+            if (index !== currentSlide && !isAnimating) {
+                stopSlideShow();
+                const direction = index > currentSlide ? 'next' : 'prev';
+                showSlide(index, direction);
+                startSlideShow();
+            }
         });
     });
 
@@ -143,6 +165,19 @@ if (testimonialSlides.length > 0) {
         testimonialContainer.addEventListener('mouseenter', stopSlideShow);
         testimonialContainer.addEventListener('mouseleave', startSlideShow);
     }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') {
+            stopSlideShow();
+            prevSlide();
+            startSlideShow();
+        } else if (e.key === 'ArrowRight') {
+            stopSlideShow();
+            nextSlide();
+            startSlideShow();
+        }
+    });
 }
 
 // Enhanced Header scroll effect with glass morphism
